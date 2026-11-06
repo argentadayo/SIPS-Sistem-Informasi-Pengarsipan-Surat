@@ -1,0 +1,280 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// MySQL 8.4 LTS (stable) — production & Docker default
+// Kompatibel juga dengan MySQL 8.0
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── RBAC ─────────────────────────────────────────────────────────
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(50)
+  guardName String   @default("web") @map("guard_name") @db.VarChar(50)
+  deskripsi String?  @db.VarChar(255)
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  guardName String   @default("web") @map("guard_name") @db.VarChar(50)
+  deskripsi String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_has_permissions")
+}
+
+// ─── Master ───────────────────────────────────────────────────────
+
+model Bidang {
+  id         Int      @id @default(autoincrement())
+  namaBidang String   @map("nama_bidang") @db.VarChar(150)
+  singkatan  String   @db.VarChar(20)
+  status     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  users       User[]
+  suratMasuk  SuratMasuk[]
+  suratKeluar SuratKeluar[]
+
+  @@map("bidang")
+}
+
+model User {
+  id                    Int       @id @default(autoincrement())
+  nama                  String    @db.VarChar(150)
+  username              String    @unique @db.VarChar(50)
+  email                 String    @unique @db.VarChar(150)
+  password              String    @db.VarChar(255)
+  roleId                Int       @map("role_id")
+  bidangId              Int?      @map("bidang_id")
+  status                Boolean   @default(true)
+  lastLoginAt           DateTime? @map("last_login_at")
+  telegramChatId        String?   @unique @map("telegram_chat_id") @db.VarChar(64)
+  telegramLinkCode      String?   @unique @map("telegram_link_code") @db.VarChar(16)
+  telegramLinkExpiresAt DateTime? @map("telegram_link_expires_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  role   Role    @relation(fields: [roleId], references: [id])
+  bidang Bidang? @relation(fields: [bidangId], references: [id], onDelete: SetNull)
+
+  sessions           Session[]
+  suratMasukCreated  SuratMasuk[]  @relation("SuratMasukCreatedBy")
+  suratMasukUpdated  SuratMasuk[]  @relation("SuratMasukUpdatedBy")
+  suratKeluarCreated SuratKeluar[] @relation("SuratKeluarCreatedBy")
+  suratKeluarUpdated SuratKeluar[] @relation("SuratKeluarUpdatedBy")
+  auditLogs          AuditLog[]
+  notifications      Notification[]
+
+  @@index([roleId])
+  @@index([bidangId])
+  @@index([status])
+  @@map("users")
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  type      String    @db.VarChar(50)
+  title     String    @db.VarChar(200)
+  body      String    @db.VarChar(1000)
+  entity    String    @db.VarChar(50)
+  entityId  Int       @map("entity_id")
+  bidangId  Int?      @map("bidang_id")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+  @@map("notifications")
+}
+
+model Session {
+  id        String   @id @db.VarChar(64)
+  userId    Int      @map("user_id")
+  tokenHash String   @map("token_hash") @db.VarChar(128)
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  userAgent String?  @map("user_agent") @db.VarChar(500)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model MasterKategori {
+  id           Int      @id @default(autoincrement())
+  kodeAwal     String   @unique @map("kode_awal") @db.VarChar(5)
+  namaKategori String   @map("nama_kategori") @db.VarChar(150)
+  status       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  kode MasterKode[]
+
+  @@map("master_kategori")
+}
+
+model MasterKode {
+  id           Int      @id @default(autoincrement())
+  kategoriId   Int      @map("kategori_id")
+  kode         String   @unique @db.VarChar(20)
+  namaKelompok String   @map("nama_kelompok") @db.Text
+  hasSubKode   Boolean  @default(false) @map("has_sub_kode")
+  status       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  kategori    MasterKategori @relation(fields: [kategoriId], references: [id], onDelete: Restrict)
+  indeks      MasterIndeks[]
+  suratMasuk  SuratMasuk[]
+  suratKeluar SuratKeluar[]
+
+  @@index([kategoriId])
+  @@index([status])
+  @@map("master_kode")
+}
+
+model MasterIndeks {
+  id           Int      @id @default(autoincrement())
+  kodeId       Int      @map("kode_id")
+  namaIndeks   String   @map("nama_indeks") @db.VarChar(1000)
+  urutanIndeks Int      @map("urutan_indeks")
+  status       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  kode        MasterKode    @relation(fields: [kodeId], references: [id], onDelete: Cascade)
+  suratMasuk  SuratMasuk[]
+  suratKeluar SuratKeluar[]
+
+  @@unique([kodeId, urutanIndeks])
+  @@index([kodeId])
+  @@map("master_indeks")
+}
+
+// ─── Surat ────────────────────────────────────────────────────────
+
+model SuratMasuk {
+  id                Int       @id @default(autoincrement())
+  noUrut            Int       @unique @map("no_urut")
+  tanggalMasukSurat DateTime  @map("tanggal_masuk_surat") @db.Date
+  asalSurat         String    @map("asal_surat") @db.VarChar(255)
+  tanggalSurat      DateTime  @map("tanggal_surat") @db.Date
+  nomorSurat        String    @map("nomor_surat") @db.VarChar(100)
+  kodeId            Int       @map("kode_id")
+  indeksId          Int?      @map("indeks_id")
+  perihal           String    @db.VarChar(500)
+  bidangId          Int       @map("bidang_id")
+  tanggalDisposisi  DateTime? @map("tanggal_disposisi") @db.Date
+  keterangan        String?   @db.Text
+  filePath          String?   @map("file_path") @db.VarChar(255)
+  fileOriginalName  String?   @map("file_original_name") @db.VarChar(255)
+  fileMime          String?   @map("file_mime") @db.VarChar(100)
+  fileSize          Int?      @map("file_size")
+  ocrText           String?   @map("ocr_text") @db.LongText
+  createdBy         Int       @map("created_by")
+  updatedBy         Int?      @map("updated_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  kode    MasterKode    @relation(fields: [kodeId], references: [id])
+  indeks  MasterIndeks? @relation(fields: [indeksId], references: [id])
+  bidang  Bidang        @relation(fields: [bidangId], references: [id])
+  creator User          @relation("SuratMasukCreatedBy", fields: [createdBy], references: [id])
+  updater User?         @relation("SuratMasukUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([tanggalMasukSurat])
+  @@index([nomorSurat])
+  @@index([bidangId])
+  @@index([kodeId])
+  @@index([createdBy])
+  @@map("surat_masuk")
+}
+
+model SuratKeluar {
+  id               Int      @id @default(autoincrement())
+  noUrut           Int      @unique @map("no_urut")
+  tanggalSurat     DateTime @map("tanggal_surat") @db.Date
+  nomorSurat       String   @map("nomor_surat") @db.VarChar(100)
+  kodeId           Int      @map("kode_id")
+  indeksId         Int?     @map("indeks_id")
+  perihal          String   @db.VarChar(500)
+  ditujukanKepada  String   @map("ditujukan_kepada") @db.VarChar(255)
+  bidangId         Int      @map("bidang_id")
+  keterangan       String?  @db.Text
+  filePath         String?  @map("file_path") @db.VarChar(255)
+  fileOriginalName String?  @map("file_original_name") @db.VarChar(255)
+  fileMime         String?  @map("file_mime") @db.VarChar(100)
+  fileSize         Int?     @map("file_size")
+  ocrText          String?  @map("ocr_text") @db.LongText
+  createdBy        Int      @map("created_by")
+  updatedBy        Int?     @map("updated_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  kode    MasterKode    @relation(fields: [kodeId], references: [id])
+  indeks  MasterIndeks? @relation(fields: [indeksId], references: [id])
+  bidang  Bidang        @relation(fields: [bidangId], references: [id])
+  creator User          @relation("SuratKeluarCreatedBy", fields: [createdBy], references: [id])
+  updater User?         @relation("SuratKeluarUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([tanggalSurat])
+  @@index([nomorSurat])
+  @@index([bidangId])
+  @@index([kodeId])
+  @@index([createdBy])
+  @@map("surat_keluar")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @map("user_id")
+  action    String   @db.VarChar(50)
+  entity    String   @db.VarChar(50)
+  entityId  Int?     @map("entity_id")
+  detail    String?  @db.Text
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

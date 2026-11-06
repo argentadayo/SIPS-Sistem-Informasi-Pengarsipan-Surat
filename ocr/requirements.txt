@@ -1,0 +1,19 @@
+# Runtime inference for layoutlmv3-bio-model.
+# Windows venv: PyPI wheels sudah CPU. Docker (Linux): torch diinstall duluan dari
+# index https://download.pytorch.org/whl/cpu oleh Dockerfile (hindari build CUDA +
+# paket nvidia-* ~1,4 GB). Pin `==2.13.0` di bawah tetap puas oleh 2.13.0+cpu.
+torch==2.13.0
+torchvision==0.28.0
+torchaudio==2.11.0
+transformers==5.14.1
+safetensors==0.8.0
+tokenizers==0.22.2
+huggingface-hub==1.26.0
+accelerate==1.14.0
+paddleocr==2.7.3
+paddlepaddle==2.6.2
+pillow==12.3.0
+numpy==1.26.4
+fastapi==0.141.1
+uvicorn==0.52.4
+python-multipart==0.0.32
