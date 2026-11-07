@@ -142,12 +142,12 @@
 | 125 | Backup & Restore DB | Backup database sips_db dengan mysqldump (single-transaction, routines) | File dump SQL berhasil dibuat (ukuran > 100 KB) | File dump 343.123 bytes | Lulus |
 | 126 | Backup & Restore DB | Periksa isi dump (struktur tabel) | Dump memuat tabel utama: users, surat_masuk, surat_keluar, notifications | 13 tabel terdeteksi, termasuk 4 tabel utama | Lulus |
 | 127 | Backup & Restore DB | Restore dump ke database baru (bb_test_restore) lalu bandingkan jumlah baris | Jumlah baris sama persis dengan database sumber | users 2=2; surat_masuk 4=4; surat_keluar 1=1; notifications 31=31; bidang 4=4; master_kode 670=670 | Lulus |
-| 128 | UI (Manual) | Buka http://localhost:5173 tanpa login | Halaman login tampil (redirect ke /login) |  |  |
-| 129 | UI (Manual) | Login dengan password salah di halaman login | Muncul pesan error 'Username atau password salah' |  |  |
-| 130 | UI (Manual) | Login superadmin → navigasi dashboard | Dashboard tampil dengan statistik surat |  |  |
-| 131 | UI (Manual) | Form surat masuk: upload file & simpan | Surat tersimpan, muncul di daftar |  |  |
-| 132 | UI (Manual) | Halaman Notifikasi sebagai Super Admin | Card Telegram TIDAK tampil; subtitle 'semua bidang' |  |  |
-| 133 | UI (Manual) | Halaman Notifikasi sebagai Admin Bidang | Card Telegram TAMPIL (opsi taut Telegram) |  |  |
+| 128 | UI (Manual) | Buka http://localhost:5173 tanpa login | Halaman login tampil (redirect ke /login) | Halaman login berhsail dibuka | Lulus |
+| 129 | UI (Manual) | Login dengan password salah di halaman login | Muncul pesan error 'Username atau password salah' | Pesan error muncul setelah salah memasukkan Password | Lulus |
+| 130 | UI (Manual) | Login superadmin → navigasi dashboard | Dashboard tampil dengan statistik surat | Halaman Dashboard berhasil ditampilkan | Lulus |
+| 131 | UI (Manual) | Form surat masuk: upload file & simpan | Surat tersimpan, muncul di daftar | Surat berhasil tersimpan dan muncul di list | Lulus |
+| 132 | UI (Manual) | Halaman Notifikasi sebagai Super Admin | Card Telegram TIDAK tampil; subtitle 'semua bidang' | Card Telegram tidak tampil | Lulus |
+| 133 | UI (Manual) | Halaman Notifikasi sebagai Admin Bidang | Card Telegram TAMPIL (opsi taut Telegram) | Card Telegram tampil | Lulus |
 
 ## 3. Ringkasan
 
