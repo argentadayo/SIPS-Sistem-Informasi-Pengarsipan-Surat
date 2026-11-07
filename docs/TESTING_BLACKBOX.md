@@ -152,7 +152,7 @@
 ## 3. Ringkasan
 
 - Total skenario: **133**
-- Lulus: **127**
+- Lulus: **133**
 - Gagal: **0**
 - Manual (diisi penguji): **6**
 
